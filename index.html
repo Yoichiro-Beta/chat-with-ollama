@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Llama Model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #chatBox {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #messageInput {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h2>Chat with Llama Model</h2>
+    
+    <div id="chatBox"></div>
+
+    <textarea id="messageInput" rows="4" placeholder="Enter your message..."></textarea>
+    <button onclick="sendMessage()">Send Message</button>
+
+    <script>
+        const apiUrl = 'http://127.0.01:11434/api/generate';  // Replace with your actual endpoint
+
+        var ownHistory="";
+
+        // Set up initial system persona and user's first message
+        let chatHistory = [
+            {"model":"llama3.1"},
+            {
+                role: "system",
+                content: "You are a helpful assistant who loves discussing Magic: The Gathering, especially EDH decks. Your user enjoys discussing strategies and cards, and you should remember key details about their decks."
+            },
+            {
+                role: "user",
+                content: "I am working on an EDH deck with Myrkul, Lord of Bones as the commander. I also want to include 'Fountain Watch' for additional protection."
+            }
+        ];
+
+        function sendMessage() {
+            const userMessage = document.getElementById('messageInput').value;
+            if (userMessage.trim() === "") return;
+
+            // Display the user message
+            displayMessage('You', userMessage);
+
+            // Add user message to the chat history
+            chatHistory.push({
+                role: "user",
+                content: userMessage
+            });
+
+            // Create a new XMLHttpRequest to send the data
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', apiUrl, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+
+            // Set up the request callback
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // Parse the JSON response
+                    var text = "["+xhr.responseText+"]";
+                    text = text.replace(/\n/g, ",");
+                    text = text.replace(",]", "]");
+                    const response = JSON.parse(text);
+
+                    var gptResponse = "";
+
+                    for (var i = 0; i < response.length; i++){
+                        var obj = response[i];
+                        gptResponse = gptResponse + obj.response;
+                    }
+                    
+                    // Display the assistant's response
+                    displayMessage('Teacher', gptResponse);
+                    
+                    // Add the assistant's reply to the chat history
+                    chatHistory.push({
+                        role: "assistant",
+                        content: gptResponse
+                    });
+
+                    // Clear the input field
+                    document.getElementById('messageInput').value = '';
+                } else {
+                    console.error('Error:', xhr.status, xhr.statusText);
+                }
+            };
+
+            // Send the chat history as JSON
+            //console.log(JSON.stringify(chatHistory));
+            var pre = "You are the helpful kindergarden teacher. Answer all questions in a simple sentence."+ownHistory+" User: "+userMessage;
+            console.log(pre);
+            xhr.send('{"model": "llama3.1", "prompt":"'+pre+'"}');
+        }
+
+        function displayMessage(role, message) {
+            ownHistory+=role+": "+message+"";
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = `${role}: ${message}`;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;  // Scroll to the latest message
+        }
+    </script>
+</body>
+</html>
