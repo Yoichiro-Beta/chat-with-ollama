@@ -19,7 +19,7 @@
             max-height: 300px;
             overflow-y: auto;
         }
-        #messageInput {
+        #messageInput, #personalityPrompt {
             width: 100%;
             padding: 10px;
             margin-top: 10px;
@@ -40,12 +40,12 @@
     <h2>Chat with Llama Model</h2>
     
     <div id="chatBox"></div>
-
+    <textarea id="personalityPrompt" rows="4">You are the helpful kindergarten teacher. Answer all questions in a simple sentence.</textarea>
     <textarea id="messageInput" rows="4" placeholder="Enter your message..."></textarea>
     <button onclick="sendMessage()">Send Message</button>
 
     <script>
-        const apiUrl = 'http://127.0.0.1:11434/api/generate';  // Replace with your actual endpoint. This is the ollama default port.
+        const apiUrl = 'http://127.0.0.1:11434/api/generate';  // Replace with your actual endpoint
 
         let chatHistory = "";  // Keeps track of the conversation history
 
@@ -93,7 +93,8 @@
             };
 
             // Prepare the message prompt to send to the model
-            const prompt = "You are the helpful kindergarten teacher. Answer all questions in a simple sentence." + chatHistory + " User: " + userMessage;
+            const personality = document.getElementById("personalityPrompt").value;
+            const prompt = personality + chatHistory + " User: " + userMessage;
             console.log(prompt);  // Debug: Log the final prompt
 
             // Send the data as a JSON string with the model and prompt
