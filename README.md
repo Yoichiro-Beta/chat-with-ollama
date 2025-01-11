@@ -6,6 +6,12 @@ This example demonstrates running Ollama on your local machine and accessing it 
 
 ## Running the Example
 
+### 0. Install Ollama
+Head over to the Ollama site and download and install:
+```bash
+https://ollama.com/download/windows
+```
+
 ### 1. Start Ollama
 In a shell, start Ollama with a model (e.g., a Llama 3.1 model):
 
