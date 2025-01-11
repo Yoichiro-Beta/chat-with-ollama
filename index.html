@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,87 +45,82 @@
     <button onclick="sendMessage()">Send Message</button>
 
     <script>
-        const apiUrl = 'http://127.0.01:11434/api/generate';  // Replace with your actual endpoint
+        const apiUrl = 'http://127.0.0.1:11434/api/generate';  // Replace with your actual endpoint. This is the ollama default port.
 
-        var ownHistory="";
+        let chatHistory = "";  // Keeps track of the conversation history
 
-        // Set up initial system persona and user's first message
-        let chatHistory = [
-            {"model":"llama3.1"},
-            {
-                role: "system",
-                content: "You are a helpful assistant who loves discussing Magic: The Gathering, especially EDH decks. Your user enjoys discussing strategies and cards, and you should remember key details about their decks."
-            },
-            {
-                role: "user",
-                content: "I am working on an EDH deck with Myrkul, Lord of Bones as the commander. I also want to include 'Fountain Watch' for additional protection."
-            }
-        ];
-
+        /**
+         * Sends a message to the model and receives a response.
+         */
         function sendMessage() {
+            // Get the user input message
             const userMessage = document.getElementById('messageInput').value;
-            if (userMessage.trim() === "") return;
+            if (userMessage.trim() === "") return;  // Prevent sending empty messages
 
-            // Display the user message
+            // Display the user message in the chat box
             displayMessage('You', userMessage);
 
-            // Add user message to the chat history
-            chatHistory.push({
-                role: "user",
-                content: userMessage
-            });
-
-            // Create a new XMLHttpRequest to send the data
+            // Create a new XMLHttpRequest to send data
             const xhr = new XMLHttpRequest();
             xhr.open('POST', apiUrl, true);
             xhr.setRequestHeader('Content-Type', 'application/json');
 
-            // Set up the request callback
+            // Request callback to handle the response
             xhr.onload = function() {
                 if (xhr.status === 200) {
-                    // Parse the JSON response
-                    var text = "["+xhr.responseText+"]";
-                    text = text.replace(/\n/g, ",");
-                    text = text.replace(",]", "]");
-                    const response = JSON.parse(text);
+                    // Parse the JSON response from the model
+                    let responseText = "[" + xhr.responseText + "]";
+                    responseText = responseText.replace(/\n/g, ",");
+                    responseText = responseText.replace(",]", "]");
+                    const response = JSON.parse(responseText);
 
-                    var gptResponse = "";
+                    let gptResponse = "";
 
-                    for (var i = 0; i < response.length; i++){
-                        var obj = response[i];
-                        gptResponse = gptResponse + obj.response;
+                    // Loop through the response array and concatenate the results
+                    for (let i = 0; i < response.length; i++) {
+                        let obj = response[i];
+                        gptResponse += obj.response;
                     }
-                    
+
                     // Display the assistant's response
                     displayMessage('Teacher', gptResponse);
-                    
-                    // Add the assistant's reply to the chat history
-                    chatHistory.push({
-                        role: "assistant",
-                        content: gptResponse
-                    });
 
-                    // Clear the input field
+                    // Clear the input field after sending the message
                     document.getElementById('messageInput').value = '';
                 } else {
-                    console.error('Error:', xhr.status, xhr.statusText);
+                    console.error('Error:', xhr.status, xhr.statusText);  // Log error if the request fails
                 }
             };
 
-            // Send the chat history as JSON
-            //console.log(JSON.stringify(chatHistory));
-            var pre = "You are the helpful kindergarden teacher. Answer all questions in a simple sentence."+ownHistory+" User: "+userMessage;
-            console.log(pre);
-            xhr.send('{"model": "llama3.1", "prompt":"'+pre+'"}');
+            // Prepare the message prompt to send to the model
+            const prompt = "You are the helpful kindergarten teacher. Answer all questions in a simple sentence." + chatHistory + " User: " + userMessage;
+            console.log(prompt);  // Debug: Log the final prompt
+
+            // Send the data as a JSON string with the model and prompt
+            xhr.send(JSON.stringify({ "model": "llama3.1", "prompt": prompt }));
         }
 
+        /**
+         * Displays the message in the chat box.
+         * @param {string} role - The role of the sender (e.g., "You" or "Teacher").
+         * @param {string} message - The message to display.
+         */
         function displayMessage(role, message) {
-            ownHistory+=role+": "+message+"";
+            // Update the chatHistory to keep track of the conversation
+            chatHistory += `${role}: ${message}\n`;
+
+            // Get the chat box container
             const chatBox = document.getElementById('chatBox');
+
+            // Create a new div to hold the message
             const messageDiv = document.createElement('div');
             messageDiv.textContent = `${role}: ${message}`;
+
+            // Append the new message to the chat box
             chatBox.appendChild(messageDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;  // Scroll to the latest message
+
+            // Scroll to the bottom of the chat box to show the latest message
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
 </body>
